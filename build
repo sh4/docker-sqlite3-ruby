@@ -1,0 +1,20 @@
+#!/bin/sh
+
+BASE=$PWD
+
+cp -p $BASE/build* i386
+cp -p $BASE/build* x86_64
+
+mkdir -p $BASE/linux
+chcon -Rt svirt_sandbox_file_t $BASE/linux
+
+mkdir $BASE/linux/sqlite
+
+docker run -v $BASE/linux/sqlite:/build:rw sqlite3-ruby:i386   /build_sqlite3-ruby i386   /build
+docker run -v $BASE/linux/sqlite:/build:rw sqlite3-ruby:x86_64 /build_sqlite3-ruby x86_64 /build
+
+mkdir $BASE/linux/msgpack
+
+docker run -v $BASE/linux/msgpack:/build:rw sqlite3-ruby:i386   /build_msgpack i386   /build
+docker run -v $BASE/linux/msgpack:/build:rw sqlite3-ruby:x86_64 /build_msgpack x86_64 /build
+

@@ -1,0 +1,67 @@
+#!/bin/sh
+
+# ADD ./build-sqlite3-ruby /build-sqlite3-ruby
+# docker run -v /root/linux:/build sqlite3-ruby-build:i386 /build-sqlite3-ruby i386 /build
+ARCH=$1
+INSTALL=$2
+
+######################################################################
+## Download SQLite amalgamation archive (zip) 
+######################################################################
+
+pushd /tmp
+
+sqlite3_rel=$(curl -s 'http://www.sqlite.org/download.html' | grep -o '[0-9]*/sqlite-amalgamation-[0-9]*.zip' | head -n 1)
+curl -sO "http://www.sqlite.org/$sqlite3_rel"
+unzip -q $(basename $sqlite3_rel)
+sqlite3_dir=$PWD/$(basename ${sqlite3_rel%.zip})
+
+pushd $sqlite3_dir
+gcc $CFLAGS \
+    -fPIC -Wall -O2 \
+    -DSQLITE_ENABLE_COLUMN_METADATA \
+    -c sqlite3.c -o sqlite3.o $LDFLAGS && \
+    ar rv sqlite3.a sqlite3.o
+popd
+
+######################################################################
+## Bulid sqlite3-ruby extension 
+######################################################################
+
+base=$PWD
+master=sqlite3-ruby
+branch=1.8.5-support
+
+build_sqlite() {
+    local path="$1"
+    local dest="$2"
+    if [ -f Makefile ]; then
+        make clean
+    fi
+    PATH="$path" LDFLAGS="$LDFLAGS $sqlite3_dir/sqlite3.a" \
+        ruby extconf.rb \
+        --enable-local \
+        --enable-static \
+        --with-sqlite3-include="$sqlite3_dir" && \
+        make clean && \
+        make && \
+        strip ./sqlite3_native.so && \
+        mkdir -p $dest && \
+        cp -p ./sqlite3_native.so $dest/sqlite3_native.so
+}
+
+if [ ! -d $INSTALL ]; then
+    mkdir -p $INSTALL
+fi
+
+curl -ksOL https://github.com/sh4/sqlite3-ruby/archive/${branch}.zip
+unzip -q ${branch}.zip
+pushd ${master}-$branch/ext/sqlite3
+    build_sqlite "/ruby-1.8/bin:$PATH" "${INSTALL}/1.8/${ARCH}" 
+    build_sqlite "/ruby-1.9/bin:$PATH" "${INSTALL}/1.9/${ARCH}" 
+    build_sqlite "/ruby-2.0/bin:$PATH" "${INSTALL}/2.0/${ARCH}" 
+    build_sqlite "/ruby-2.1/bin:$PATH" "${INSTALL}/2.1/${ARCH}" 
+popd
+
+popd
+
