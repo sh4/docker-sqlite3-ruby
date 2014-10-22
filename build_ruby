@@ -25,10 +25,10 @@ pushd ruby-1.9.3-p547
     ./configure --prefix=/ruby-1.9 --disable-install-rdoc && make && make install
 popd
 
-# 2.0.0-p481
+# 2.0.0-p576
 curl -sL -o ruby-2.0.0-p576.tar.gz http://cache.ruby-lang.org/pub/ruby/2.0/ruby-2.0.0-p576.tar.gz
-tar zxf ruby-2.0.0-p481.tar.gz 
-pushd ruby-2.0.0-p481
+tar zxf ruby-2.0.0-p576.tar.gz 
+pushd ruby-2.0.0-p576
     ./configure --prefix=/ruby-2.0 --disable-install-rdoc && make && make install
 popd
 
