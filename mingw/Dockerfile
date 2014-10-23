@@ -1,6 +1,6 @@
 FROM ubuntu:latest
 
-RUN apt-get update -y && apt-get upgrade -y && apt-get install -y mingw-w64 curl wget make
+RUN apt-get update -y && apt-get upgrade -y && apt-get install -y mingw-w64 curl wget make zlib1g zlib1g-dev
 
 ADD ./build_ruby  /build_ruby
 RUN chmod +x /build_ruby

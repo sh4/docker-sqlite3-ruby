@@ -5,7 +5,13 @@ cd /tmp
 curl -sL -o ruby-1.8.7-p374.tar.gz http://cache.ruby-lang.org/pub/ruby/1.8/ruby-1.8.7-p374.tar.gz
 tar zxf ruby-1.8.7-p374.tar.gz 
 cd ruby-1.8.7-p374
-./configure --prefix=/ruby-1.8 --enable-static && make && make install
+./configure --prefix=/ruby-1.8 --enable-static && \
+	make && \
+	make install && \
+	curl -kSOL http://production.cf.rubygems.org/rubygems/rubygems-2.4.2.tgz && \
+	tar zxf rubygems-2.4.2.tgz && \
+	cd rubygems-2.4.2 && \
+	/ruby-1.8/bin/ruby setup.rb
 
 # 1.9.3-p547
 cd /tmp
