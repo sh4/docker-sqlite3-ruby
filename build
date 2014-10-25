@@ -3,10 +3,11 @@
 BASE=/root/linux
 
 cp -fp $PWD/build* i386/
-fdocker build -t sqlite3-ruby:i386 i386/
-
 cp -fp $PWD/build* x86_64/
+cp -fp $PWD/build* mingw/
+docker build -t sqlite3-ruby:i386 i386/
 docker build -t sqlite3-ruby:x86_64 x86_64/
+docker build -t sqlite3-ruby:mingw mingw/
 
 mkdir -p $BASE
 chcon -Rt svirt_sandbox_file_t $BASE
@@ -20,5 +21,6 @@ docker run -v $BASE/msgpack:/build:rw sqlite3-ruby:i386   /build_msgpack-ruby i3
 docker run -v $BASE/msgpack:/build:rw sqlite3-ruby:x86_64 /build_msgpack-ruby x86_64 /build
 
 mkdir -p $BASE/sqlite-mingw
-#docker run -v $BASE/sqlite-mingw:/build:rw sqlite3-ruby:mingw /build_sqlite3-ruby i686 /build 
+docker run -v $BASE/sqlite-mingw:/build:rw sqlite3-ruby:mingw /build_sqlite3-ruby i386-mingw32 /build 
+docker run -v $BASE/sqlite-mingw:/build:rw sqlite3-ruby:mingw /build_sqlite3-ruby x64-mingw32 /build 
 
