@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ARCH=$1
 INSTALL=$2
@@ -18,19 +18,16 @@ build_msgpack() {
 }
 
 pushd /tmp
-
-if [ ! -d $INSTALL ]; then
-    mkdir -p $INSTALL
-fi
-
-curl -ksOL https://github.com/msgpack/msgpack-ruby/archive/v0.5.9.zip
-unzip -q v0.5.9.zip
-pushd msgpack-ruby-0.5.9/ext/msgpack
-    build_msgpack "/ruby-1.8/bin:$PATH" "${INSTALL}/1.8/${ARCH}"
-    build_msgpack "/ruby-1.9/bin:$PATH" "${INSTALL}/1.9/${ARCH}"
-    build_msgpack "/ruby-2.0/bin:$PATH" "${INSTALL}/2.0/${ARCH}"
-    build_msgpack "/ruby-2.1/bin:$PATH" "${INSTALL}/2.1/${ARCH}"
-popd
-
+    if [ ! -d $INSTALL ]; then
+        mkdir -p $INSTALL
+    fi
+    curl -ksOL https://github.com/msgpack/msgpack-ruby/archive/v0.5.9.zip
+    unzip -q v0.5.9.zip
+    pushd msgpack-ruby-0.5.9/ext/msgpack
+        build_msgpack "/ruby-1.8/bin:$PATH" "${INSTALL}/1.8/${ARCH}"
+        build_msgpack "/ruby-1.9/bin:$PATH" "${INSTALL}/1.9/${ARCH}"
+        build_msgpack "/ruby-2.0/bin:$PATH" "${INSTALL}/2.0/${ARCH}"
+        build_msgpack "/ruby-2.1/bin:$PATH" "${INSTALL}/2.1/${ARCH}"
+    popd
 popd
 

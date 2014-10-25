@@ -12,10 +12,13 @@ mkdir -p $BASE
 chcon -Rt svirt_sandbox_file_t $BASE
 
 mkdir -p $BASE/sqlite
-docker run -v $BASE/sqlite:/build:rw sqlite3-ruby:i386   /build_sqlite3-ruby i386   /build
+docker run -v $BASE/sqlite:/build:rw sqlite3-ruby:i386   /build_sqlite3-ruby i386   /build 
 docker run -v $BASE/sqlite:/build:rw sqlite3-ruby:x86_64 /build_sqlite3-ruby x86_64 /build
 
 mkdir -p $BASE/msgpack
 docker run -v $BASE/msgpack:/build:rw sqlite3-ruby:i386   /build_msgpack-ruby i386   /build
 docker run -v $BASE/msgpack:/build:rw sqlite3-ruby:x86_64 /build_msgpack-ruby x86_64 /build
+
+mkdir -p $BASE/sqlite-mingw
+#docker run -v $BASE/sqlite-mingw:/build:rw sqlite3-ruby:mingw /build_sqlite3-ruby i686 /build 
 
