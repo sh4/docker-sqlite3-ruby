@@ -16,6 +16,8 @@ RUN PATH=$PATH:/ruby-1.8/bin rake-compiler cross-ruby VERSION=1.8.7-p374 EXTS=--
     PATH=$PATH:/ruby-2.0/bin rake-compiler cross-ruby VERSION=2.0.0-p576 EXTS=--without-extensions && \
     PATH=$PATH:/ruby-2.1/bin rake-compiler cross-ruby VERSION=2.1.3 EXTS=--without-extensions
 
+RUN apt-get install -y unzip
+
 #ADD ./build_sqlite3-ruby /build_sqlite3-ruby
 #RUN chmod +x /build_sqlite3-ruby
 
