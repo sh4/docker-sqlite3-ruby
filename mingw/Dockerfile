@@ -24,9 +24,9 @@ RUN PATH=$PATH:/ruby-1.8/bin rake-compiler cross-ruby VERSION=1.8.7-p374 HOST=i6
     PATH=$PATH:/ruby-2.1/bin rake-compiler cross-ruby VERSION=2.1.3      HOST=i686-w64-mingw32 EXTS=--without-extensions && \
     PATH=$PATH:/ruby-2.1/bin rake-compiler cross-ruby VERSION=2.1.3      HOST=x86_64-w64-mingw32  EXTS=--without-extensions
 
-#ADD ./build_sqlite3-ruby /build_sqlite3-ruby
-#RUN chmod +x /build_sqlite3-ruby
+ADD ./build_sqlite3-ruby /build_sqlite3-ruby
+RUN chmod +x /build_sqlite3-ruby
 
-#ADD ./build_msgpack-ruby /build_msgpack-ruby
-#RUN chmod +x /build_msgpack-ruby
+ADD ./build_msgpack-ruby /build_msgpack-ruby
+RUN chmod +x /build_msgpack-ruby
 
