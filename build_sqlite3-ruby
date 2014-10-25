@@ -4,6 +4,7 @@
 # docker run -v /root/linux:/build sqlite3-ruby-build:i386 /build-sqlite3-ruby i386 /build
 ARCH=$1
 INSTALL=$2
+SQLITE3_DIR=
 
 ######################################################################
 ## Download SQLite amalgamation archive (zip) 
@@ -28,8 +29,8 @@ build_sqlite() {
         grep -o '[0-9]*/sqlite-amalgamation-[0-9]*.zip' | head -n 1)
     curl -sO "http://www.sqlite.org/$sqlite3_rel"
     unzip -q $(basename $sqlite3_rel)
-    local sqlite3_dir=$PWD/$(basename ${sqlite3_rel%.zip})
-    pushd $sqlite3_dir
+    SQLITE3_DIR=$PWD/$(basename ${sqlite3_rel%.zip})
+    pushd $SQLITE3_DIR
     $gcc $CFLAGS \
         -fPIC -Wall -O2 -DSQLITE_ENABLE_COLUMN_METADATA \
         -c sqlite3.c -o sqlite3.o $LDFLAGS && \
@@ -43,8 +44,14 @@ build_sqlite() {
 
 mingw_rakefile() {
     local rbver=$1
-    local extname=$2
-    local extoption=$3
+    local extoption=$2
+    local $arch=""
+
+    if [ $ARCH = "i686" ]; then
+        $arch="i386-mingw32"
+    elif [ $ARCH = "x86_64" ]; then 
+        $arch="x64-mingw32"
+    fi
 
     cat << _EOT_ > Rakefile
 # coding: utf-8
@@ -52,14 +59,15 @@ mingw_rakefile() {
 require "rake/extensiontask"
 
 Rake::ExtensionTask.new do |e|
-  e.name = '$extname'
+  e.cross_compile = true
+  e.cross_platform = "$arch"
+  e.cross_config_options << '$extoption'
+  e.name = 'sqlite3_native'
   e.ext_dir = "./"
   e.lib_dir = "./"
   e.tmp_dir = "/tmp"
-  e.config_options << '$extoption'
 end
 _EOT_
-    rake cross compile RUBY_CC_VERSION=$rbver
 }
 
 build_sqlite_ruby() {
@@ -67,7 +75,7 @@ build_sqlite_ruby() {
     local dest="$2"
     local rbver="$3"
     local gccstrip="strip"
-    local gccoption=--enable-local --enable-static --with-sqlite3-include=$sqlite3_dir
+    local gccoption="--enable-local --enable-static --with-sqlite3-include=$SQLITE3_DIR"
     # MinGW envirnoment (use rake-compiler gem)
     if [ $ARCH = "i686" ]; then
         # x86 (win32)
@@ -81,9 +89,11 @@ build_sqlite_ruby() {
     fi
 
     if [ $ARCH = "i686" -o $ARCH = "x86_64" ]; then 
-        mingw_rakefile($rbver, "sqlite3", $gccoption)
+        mingw_rakefile $rbver "$gccoption"
+        PATH="$path" LDFLAGS="$LDFLAGS $SQLITE3_DIR/sqlite3.a" \
+            rake cross compile
     else
-        PATH="$path" LDFLAGS="$LDFLAGS $sqlite3_dir/sqlite3.a" \
+        PATH="$path" LDFLAGS="$LDFLAGS $SQLITE3_DIR/sqlite3.a" \
             ruby extconf.rb $gccoption && \
             make clean && \
             make
