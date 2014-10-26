@@ -106,7 +106,8 @@ build_sqlite_ruby() {
             echo Skip compile: $ARCH $rbver
             return 1
         fi
-        PATH="$path" LDFLAGS="$LDFLAGS $SQLITE3_DIR/sqlite3.a" \
+        PATH="$path" rake cross clean && \
+            PATH="$path" LDFLAGS="$LDFLAGS $SQLITE3_DIR/sqlite3.a" \
             rake cross compile
     else
         PATH="$path" LDFLAGS="$LDFLAGS $SQLITE3_DIR/sqlite3.a" \
