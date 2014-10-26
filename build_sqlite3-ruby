@@ -107,7 +107,7 @@ build_sqlite_ruby() {
             return 1
         fi
         PATH="$path" rake cross clean && \
-            PATH="$path" CFLAGS="-static-libgcc" LDFLAGS="$LDFLAGS $SQLITE3_DIR/sqlite3.a" \
+            PATH="$path" LDFLAGS="$LDFLAGS -static-libgcc $SQLITE3_DIR/sqlite3.a" \
             rake cross compile
     else
         PATH="$path" LDFLAGS="$LDFLAGS $SQLITE3_DIR/sqlite3.a" \
