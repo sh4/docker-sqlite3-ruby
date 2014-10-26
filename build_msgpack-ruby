@@ -65,7 +65,7 @@ build_msgpack() {
             return 1
         fi
         PATH="$path" rake cross clean && \
-            PATH="$path" rake cross compile
+            CFLAGS="-static-libgcc" PATH="$path" rake cross compile
     else
         PATH="$path" ruby extconf.rb \
             make clean && \
