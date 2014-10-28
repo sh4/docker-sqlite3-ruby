@@ -3,19 +3,24 @@
 BASE=/root/linux
 
 cp -fp $PWD/build* i386/
-fdocker build -t sqlite3-ruby:i386 i386/
-
 cp -fp $PWD/build* x86_64/
+cp -fp $PWD/build* mingw/
+docker build -t sqlite3-ruby:i386 i386/
 docker build -t sqlite3-ruby:x86_64 x86_64/
+docker build -t sqlite3-ruby:mingw mingw/
 
-mkdir -p $BASE
+mkdir -p $BASE/{sqlite,msgpack}
 chcon -Rt svirt_sandbox_file_t $BASE
 
-mkdir -p $BASE/sqlite
-docker run -v $BASE/sqlite:/build:rw sqlite3-ruby:i386   /build_sqlite3-ruby i386   /build
-docker run -v $BASE/sqlite:/build:rw sqlite3-ruby:x86_64 /build_sqlite3-ruby x86_64 /build
+# Build sqlite3-ruby
+docker run -v $BASE/sqlite:/build:rw sqlite3-ruby:i386    /build_sqlite3-ruby i386   /build 
+docker run -v $BASE/sqlite:/build:rw sqlite3-ruby:x86_64  /build_sqlite3-ruby x86_64 /build
+docker run -v $BASE/sqlite:/build:rw sqlite3-ruby:mingw   /build_sqlite3-ruby i386-mingw32 /build 
+docker run -v $BASE/sqlite:/build:rw sqlite3-ruby:mingw   /build_sqlite3-ruby x64-mingw32 /build 
 
-mkdir -p $BASE/msgpack
+# Build msgpack-ruby
 docker run -v $BASE/msgpack:/build:rw sqlite3-ruby:i386   /build_msgpack-ruby i386   /build
 docker run -v $BASE/msgpack:/build:rw sqlite3-ruby:x86_64 /build_msgpack-ruby x86_64 /build
+docker run -v $BASE/msgpack:/build:rw sqlite3-ruby:mingw  /build_msgpack-ruby i386-mingw32 /build
+docker run -v $BASE/msgpack:/build:rw sqlite3-ruby:mingw  /build_msgpack-ruby x64-mingw32 /build
 

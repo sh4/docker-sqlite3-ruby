@@ -1,67 +1,141 @@
-#!/bin/sh
+#!/bin/bash
 
 # ADD ./build-sqlite3-ruby /build-sqlite3-ruby
 # docker run -v /root/linux:/build sqlite3-ruby-build:i386 /build-sqlite3-ruby i386 /build
 ARCH=$1
 INSTALL=$2
+SQLITE3_DIR=
 
 ######################################################################
 ## Download SQLite amalgamation archive (zip) 
 ######################################################################
 
-pushd /tmp
+build_sqlite() {
+    local gcc="gcc"
+    local ar="ar"
+    # MinGW envirnoment
+    if [ $ARCH = "i386-mingw32" ]; then
+        # x86 (win32)
+        gcc="i686-w64-mingw32-gcc"
+        ar="i686-w64-mingw32-ar"
+    fi
+    if [ $ARCH = "x64-mingw32" ]; then
+        # x86_64 (win32)
+        gcc="x86_64-w64-mingw32-gcc"
+        ar="x86_64-w64-mingw32-ar"
+    fi
 
-sqlite3_rel=$(curl -s 'http://www.sqlite.org/download.html' | grep -o '[0-9]*/sqlite-amalgamation-[0-9]*.zip' | head -n 1)
-curl -sO "http://www.sqlite.org/$sqlite3_rel"
-unzip -q $(basename $sqlite3_rel)
-sqlite3_dir=$PWD/$(basename ${sqlite3_rel%.zip})
-
-pushd $sqlite3_dir
-gcc $CFLAGS \
-    -fPIC -Wall -O2 \
-    -DSQLITE_ENABLE_COLUMN_METADATA \
-    -c sqlite3.c -o sqlite3.o $LDFLAGS && \
-    ar rv sqlite3.a sqlite3.o
-popd
+    local sqlite3_rel=$(curl -s 'http://www.sqlite.org/download.html' | \
+        grep -o '[0-9]*/sqlite-amalgamation-[0-9]*.zip' | head -n 1)
+    curl -sO "http://www.sqlite.org/$sqlite3_rel"
+    unzip -q $(basename $sqlite3_rel)
+    SQLITE3_DIR=$PWD/$(basename ${sqlite3_rel%.zip})
+    pushd $SQLITE3_DIR
+    $gcc $CFLAGS \
+        -fPIC -Wall -O2 -DSQLITE_ENABLE_COLUMN_METADATA \
+        -c sqlite3.c -o sqlite3.o $LDFLAGS && \
+        $ar rv sqlite3.a sqlite3.o
+    popd
+}
 
 ######################################################################
 ## Bulid sqlite3-ruby extension 
 ######################################################################
 
-base=$PWD
-master=sqlite3-ruby
-branch=1.8.5-support
+mingw_rakefile() {
+    local extoption="$1"
+    local rbver="$2"
+    local extarch=""
+    local rakebin=""
 
-build_sqlite() {
+    if [ $ARCH = "i386-mingw32" -o $ARCH = "x64-mingw32" ]; then
+        extarch=$ARCH
+    fi
+
+    if [ $ARCH = "i386-mingw32" ]; then
+        rakebin=i686-w64-mingw32/ruby-$rbver*
+    elif [ $ARCH = "x64-mingw32" ]; then
+        rakebin=x86_64-w64-mingw32/ruby-$rbver*
+    fi
+
+    # Exist check 
+    if [ ! -d $HOME/.rake-compiler/builds/$rakebin ]; then
+      return 1
+    fi
+
+    cat << _EOT_ > Rakefile
+# coding: utf-8
+
+require "rake/extensiontask"
+
+Rake::ExtensionTask.new do |e|
+  e.cross_compile = true
+  e.cross_platform = "$extarch"
+  e.cross_config_options << "$extoption"
+  e.name = "sqlite3_native"
+  e.ext_dir = "./"
+  e.lib_dir = "./"
+  e.tmp_dir = "./"
+end
+_EOT_
+  return 0
+}
+
+build_sqlite_ruby() {
     local path="$1"
     local dest="$2"
+    local gccstrip="strip"
+    local gccoption="--enable-local --enable-static --with-sqlite3-include=$SQLITE3_DIR"
+    local rbver=`PATH="$path" ruby -e 'puts RUBY_VERSION'`
+
+    # MinGW envirnoment (use rake-compiler gem)
+    if [ $ARCH = "i386-mingw32" ]; then
+        # x86 (win32)
+        gccstrip="i686-w64-mingw32-strip"
+    elif [ $ARCH = "x86-mingw32" ]; then
+        # x86_64 (win32)
+        gccstrip="x86_64-w64-mingw32-strip"
+    fi
     if [ -f Makefile ]; then
         make clean
     fi
-    PATH="$path" LDFLAGS="$LDFLAGS $sqlite3_dir/sqlite3.a" \
-        ruby extconf.rb \
-        --enable-local \
-        --enable-static \
-        --with-sqlite3-include="$sqlite3_dir" && \
-        make clean && \
-        make && \
-        strip ./sqlite3_native.so && \
+
+    if [ $ARCH = "i386-mingw32" -o $ARCH = "x64-mingw32" ]; then
+        mingw_rakefile "$gccoption" $rbver
+        if [ $? -ne 0 ]; then
+            echo Skip compile: $ARCH $rbver
+            return 1
+        fi
+        PATH="$path" rake cross clean && \
+            PATH="$path" LDFLAGS="$LDFLAGS -static-libgcc $SQLITE3_DIR/sqlite3.a" \
+            rake cross compile
+    else
+        PATH="$path" LDFLAGS="$LDFLAGS $SQLITE3_DIR/sqlite3.a" \
+            ruby extconf.rb $gccoption && \
+            make clean && \
+            make
+    fi
+    $gccstrip ./sqlite3_native.so && \
         mkdir -p $dest && \
         cp -p ./sqlite3_native.so $dest/sqlite3_native.so
+    return 0
 }
 
 if [ ! -d $INSTALL ]; then
     mkdir -p $INSTALL
 fi
 
-curl -ksOL https://github.com/sh4/sqlite3-ruby/archive/${branch}.zip
-unzip -q ${branch}.zip
-pushd ${master}-$branch/ext/sqlite3
-    build_sqlite "/ruby-1.8/bin:$PATH" "${INSTALL}/1.8/${ARCH}" 
-    build_sqlite "/ruby-1.9/bin:$PATH" "${INSTALL}/1.9/${ARCH}" 
-    build_sqlite "/ruby-2.0/bin:$PATH" "${INSTALL}/2.0/${ARCH}" 
-    build_sqlite "/ruby-2.1/bin:$PATH" "${INSTALL}/2.1/${ARCH}" 
-popd
-
+pushd /tmp
+    master=sqlite3-ruby
+    branch=1.8.5-support
+    build_sqlite
+    curl -ksOL https://github.com/sh4/sqlite3-ruby/archive/${branch}.zip
+    unzip -q ${branch}.zip
+    pushd ${master}-$branch/ext/sqlite3
+        build_sqlite_ruby "/ruby-1.8/bin:$PATH" "${INSTALL}/1.8/${ARCH}"
+        build_sqlite_ruby "/ruby-1.9/bin:$PATH" "${INSTALL}/1.9/${ARCH}"
+        build_sqlite_ruby "/ruby-2.0/bin:$PATH" "${INSTALL}/2.0/${ARCH}"
+        build_sqlite_ruby "/ruby-2.1/bin:$PATH" "${INSTALL}/2.1/${ARCH}"
+    popd
 popd
 
