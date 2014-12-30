@@ -8,7 +8,3 @@ RUN /build_ruby
 
 ADD ./build_sqlite3-ruby /build_sqlite3-ruby
 RUN chmod +x /build_sqlite3-ruby
-
-ADD ./build_msgpack-ruby /build_msgpack-ruby
-RUN chmod +x /build_msgpack-ruby
-

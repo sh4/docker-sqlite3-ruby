@@ -26,7 +26,7 @@ build_sqlite() {
     fi
 
     local sqlite3_rel=$(curl -s 'http://www.sqlite.org/download.html' | \
-        grep -o '[0-9]*/sqlite-amalgamation-[0-9]*.zip' | head -n 1)
+        grep -o '[0-9]*/sqlite-amalgamation-3[0-9]*.zip' | head -n 1)
     curl -sO "http://www.sqlite.org/$sqlite3_rel"
     unzip -q $(basename $sqlite3_rel)
     SQLITE3_DIR=$PWD/$(basename ${sqlite3_rel%.zip})

@@ -26,9 +26,3 @@ RUN PATH=$PATH:/ruby-1.8/bin rake-compiler cross-ruby VERSION=1.8.7-p374 HOST=i6
 
 ADD ./build_sqlite3-ruby /build_sqlite3-ruby
 RUN chmod +x /build_sqlite3-ruby
-
-ADD ./build_msgpack-ruby /build_msgpack-ruby
-RUN chmod +x /build_msgpack-ruby
-
-ADD ./win32.h /root/.rake-compiler/ruby/i686-w64-mingw32/ruby-2.0.0-p576/include/ruby-2.0.0/ruby/win32.h
-
