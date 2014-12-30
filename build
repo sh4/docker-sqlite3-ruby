@@ -3,6 +3,7 @@
 cp -fp $PWD/build* i386/
 cp -fp $PWD/build* x86_64/
 cp -fp $PWD/build* mingw/
+
 docker build -t sqlite3-ruby:i386 i386/
 docker build -t sqlite3-ruby:x86_64 x86_64/
 docker build -t sqlite3-ruby:mingw mingw/
